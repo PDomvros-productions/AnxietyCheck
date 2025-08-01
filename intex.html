@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anxiety Check</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and ReactDOM for building the UI -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel to transpile JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Using a nice font from Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-amber-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- Helper Components ---
+        const BrainIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-teal-500">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v1.2a1 1 0 0 0 1 1h.38a2 2 0 0 1 1.95 1.56 2.43 2.43 0 0 1 .12 1.2V10a1 1 0 0 0 1 1h.2a2.4 2.4 0 0 1 2.1 1.1a2 2 0 0 1 .1 2.2 2.4 2.4 0 0 1-2.1 1.1H16a1 1 0 0 0-1 1v.8a2 2 0 0 1-1.56 1.95A2.43 2.43 0 0 1 12.3 22H12a2.5 2.5 0 0 1-2.5-2.5v-1.2a1 1 0 0 0-1-1h-.38a2 2 0 0 1-1.95-1.56A2.43 2.43 0 0 1 6.05 14V12a1 1 0 0 0-1-1h-.2a2.4 2.4 0 0 1-2.1-1.1a2 2 0 0 1-.1-2.2A2.4 2.4 0 0 1 4.75 6.6H6a1 1 0 0 0 1-1v-.8A2 2 0 0 1 8.56 2.85A2.43 2.43 0 0 1 9.7 2h.1Z" />
+                <path d="M12 11.5a2.5 2.5 0 0 1 0-5" />
+                <path d="M12 17.5a2.5 2.5 0 0 0 0-5" />
+            </svg>
+        );
+
+        const Footer = () => (
+            <footer className="w-full text-center text-xs text-slate-500 py-4 mt-auto font-bold italic">
+                Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved
+            </footer>
+        );
+
+        // --- Data: Questions, Anxiety Types, and Trait Analysis (with British English spellings) ---
+        const anxietyTypes = {
+            PTSD: { name: "Post-Traumatic Stress", description: "This profile suggests patterns of re-experiencing a past traumatic event through flashbacks or nightmares, avoiding reminders of the event, and feeling constantly 'on edge' or easily startled. These feelings persist long after the traumatic event has passed." },
+            OCD: { name: "Obsessive-Compulsive", description: "This profile indicates a pattern of unwanted, intrusive thoughts (obsessions) and a strong urge to perform certain repetitive behaviours or mental acts (compulsions) to relieve anxiety. These rituals can be time-consuming and interfere with daily life." },
+            SOCIAL_PHOBIA: { name: "Social Phobia", description: "This profile suggests intense fear and anxiety related to social situations where you might be judged or scrutinised by others. This can lead to avoiding social gatherings, public speaking, or even one-on-one interactions." },
+            PANIC_DISORDER: { name: "Panic Disorder", description: "This profile is characterised by recurrent, unexpected panic attacks—sudden periods of intense fear that may include palpitations, sweating, shaking, or a feeling of impending doom. There is often a persistent fear of having another attack." },
+            SEPARATION_ANXIETY: { name: "Separation Anxiety", description: "This profile points to excessive fear or anxiety concerning separation from those to whom you are attached. This can manifest as worry about harm coming to loved ones or reluctance to be alone." },
+            GAD: { name: "Generalized Anxiety", description: "This profile suggests a pattern of excessive, uncontrollable worry about a wide range of everyday things, like health, work, or finances. This worry is often disproportionate to the actual situation and is difficult to manage." },
+            AGORAPHOBIA: { name: "Agoraphobia", description: "This profile indicates a fear of being in situations where escape might be difficult or help might not be available if you have a panic attack. This can lead to avoiding open spaces, crowds, public transport, or being outside the home alone." },
+            SPECIFIC_PHOBIAS: { name: "Specific Phobias", description: "This profile suggests an intense, irrational fear of a specific object or situation, such as spiders, heights, or flying. Exposure to the feared item provokes an immediate anxiety response." },
+            SELECTIVE_MUTISM: { name: "Selective Mutism", description: "This profile is characterised by a consistent failure to speak in specific social situations where there is an expectation to speak (like at school or work), despite being able to speak in other, more comfortable settings." },
+            ACUTE_STRESS: { name: "Acute Stress", description: "Similar to PTSD, this profile involves significant anxiety and distress immediately following a traumatic event. The symptoms last for a shorter period, typically from three days to one month after the trauma." },
+            HYPOCHONDRIA: { name: "Illness Anxiety (Hypochondria)", description: "This profile suggests a preoccupation with having or acquiring a serious illness. Despite medical reassurance, the fear persists, and you may frequently check your body for signs of illness or avoid doctors for fear of what they might find." },
+            BDD: { name: "Body Dysmorphic Disorder (BDD)", description: "This profile indicates a preoccupation with one or more perceived flaws in your physical appearance that are not observable or appear slight to others. This causes significant distress and can lead to repetitive behaviours like mirror checking or excessive grooming." }
+        };
+
+        const traitAnalysisData = {
+            PTSD: { Empathy: 15, Skills: 9, Independence: 42, Wisdom: 37, Creativity: 10 },
+            OCD: { Empathy: 1, Skills: 10, Independence: 4, Wisdom: 27, Creativity: 3 },
+            SOCIAL_PHOBIA: { Empathy: 2, Skills: 15, Independence: 24, Wisdom: 18, Creativity: 20 },
+            PANIC_DISORDER: { Empathy: 49, Skills: 15, Independence: 8, Wisdom: 4, Creativity: 19 },
+            SEPARATION_ANXIETY: { Empathy: 12, Skills: 5, Independence: 38, Wisdom: 12, Creativity: 1 },
+            GAD: { Empathy: 20, Skills: 10, Independence: 12, Wisdom: 50, Creativity: 21 },
+            AGORAPHOBIA: { Empathy: 6, Skills: 11, Independence: 54, Wisdom: 10, Creativity: 11 },
+            SPECIFIC_PHOBIAS: { Empathy: 3, Skills: 10, Independence: 11, Wisdom: 15, Creativity: 40 },
+            SELECTIVE_MUTISM: { Empathy: 12, Skills: 5, Independence: 39, Wisdom: 39, Creativity: 2 },
+            ACUTE_STRESS: { Empathy: 23, Skills: 8, Independence: 59, Wisdom: 12, Creativity: 22 },
+            HYPOCHONDRIA: { Empathy: 8, Skills: 13, Independence: 11, Wisdom: 10, Creativity: 63 },
+            BDD: { Empathy: 45, Skills: 8, Independence: 59, Wisdom: 12, Creativity: 4 }
+        };
+
+        const questions = [
+            { question: "When thinking about your appearance, you find yourself...", options: [ { text: "Generally content or rarely thinking about it.", scores: {} }, { text: "Frequently focusing on a specific 'flaw' for hours a day.", scores: { BDD: 3 } }, { text: "Feeling self-conscious in social settings, but not about a specific flaw.", scores: { SOCIAL_PHOBIA: 1 } }, { text: "Worrying that a physical sensation is a sign of a serious illness.", scores: { HYPOCHONDRIA: 2 } } ] },
+            { question: "A sudden, intense wave of fear or a racing heart is something you experience...", options: [ { text: "Rarely, if ever.", scores: {} }, { text: "When I'm the centre of attention or have to perform.", scores: { SOCIAL_PHOBIA: 2 } }, { text: "Completely out of the blue, for no apparent reason.", scores: { PANIC_DISORDER: 3 } }, { text: "When I'm reminded of a past traumatic event.", scores: { PTSD: 2, ACUTE_STRESS: 1 } } ] },
+            { question: "You have a recurring, unwanted thought or image in your mind. Your response is to:", options: [ { text: "Acknowledge it and let it pass without much difficulty.", scores: {} }, { text: "Worry about it for a while, but it eventually fades.", scores: { GAD: 1 } }, { text: "Perform a specific action or ritual to make the thought go away.", scores: { OCD: 3 } }, { text: "Try to distract yourself, but it causes significant distress.", scores: { OCD: 2 } } ] },
+            { question: "Regarding your health, you tend to:", options: [ { text: "Trust your doctor's assessment and not worry excessively.", scores: {} }, { text: "Worry about general health issues as part of a larger pattern of worry.", scores: { GAD: 1 } }, { text: "Remain convinced you have a serious illness, even after a doctor says you don't.", scores: { HYPOCHONDRIA: 3 } }, { text: "Avoid news about illness because it's too distressing.", scores: { HYPOCHONDRIA: 2 } } ] },
+            { question: "After a very stressful or frightening event, you found that for the next few weeks you were:", options: [ { text: "Able to cope and move on relatively well.", scores: {} }, { text: "Feeling jumpy, on edge, and reliving the event.", scores: { ACUTE_STRESS: 3, PTSD: 1 } }, { text: "Worried about it, but it didn't disrupt your entire life.", scores: { GAD: 1 } }, { text: "I haven't experienced such an event.", scores: {} } ] },
+            { question: "The thought of being separated from a person you're very close to makes you feel:", options: [ { text: "A normal amount of sadness, but you cope well.", scores: {} }, { text: "Intensely worried that something terrible will happen to them or you.", scores: { SEPARATION_ANXIETY: 3 } }, { text: "Anxious, but mostly because you'd feel lonely.", scores: { SEPARATION_ANXIETY: 1 } }, { text: "It depends on the situation.", scores: {} } ] },
+            { question: "In certain social settings (like work meetings or with strangers), you find it:", options: [ { text: "Easy to speak and express yourself.", scores: {} }, { text: "Anxiety-provoking, but you can push through it.", scores: { SOCIAL_PHOBIA: 1 } }, { text: "Physically impossible to speak, even though you want to.", scores: { SELECTIVE_MUTISM: 3 } }, { text: "Difficult, so you just stay quiet to avoid judgement.", scores: { SOCIAL_PHOBIA: 2, SELECTIVE_MUTISM: 1 } } ] },
+            { question: "You would describe your general level of worry as:", options: [ { text: "Low. I'm a pretty relaxed person.", scores: {} }, { text: "Focused on one or two specific things, like a fear of spiders or heights.", scores: { SPECIFIC_PHOBIAS: 2 } }, { text: "High and constant. I worry about many different things and can't seem to stop.", scores: { GAD: 3 } }, { text: "Triggered by specific situations, like being in a crowd.", scores: { AGORAPHOBIA: 1, SOCIAL_PHOBIA: 1 } } ] },
+            { question: "Which statement best describes your feelings about crowds or public spaces?", options: [ { text: "I feel fine in them.", scores: {} }, { text: "I worry I might have a panic attack and not be able to escape.", scores: { AGORAPHOBIA: 3, PANIC_DISORDER: 1 } }, { text: "I feel anxious because I think people are judging me.", scores: { SOCIAL_PHOBIA: 2 } }, { text: "They are just too loud and overwhelming.", scores: {} } ] },
+            { question: "If you have a specific, intense fear (e.g., flying, needles, dogs), you:", options: [ { text: "Don't have any fears like that.", scores: {} }, { text: "Feel a bit anxious but can manage it.", scores: {} }, { text: "Will go to great lengths to avoid the object or situation entirely.", scores: { SPECIFIC_PHOBIAS: 3 } }, { text: "Endure it with intense fear and anxiety if you absolutely have to.", scores: { SPECIFIC_PHOBIAS: 2 } } ] },
+            { question: "Months or even years after a traumatic event, you find you are still:", options: [ { text: "I haven't had an event like that, or I've processed it.", scores: {} }, { text: "Haunted by nightmares or vivid flashbacks of the event.", scores: { PTSD: 3 } }, { text: "Actively avoiding people or places that remind you of it.", scores: { PTSD: 2 } }, { text: "Feeling generally more anxious and on-guard than before.", scores: { PTSD: 1, GAD: 1 } } ] },
+            { question: "To reduce anxiety about your appearance, you might:", options: [ { text: "This isn't a major source of anxiety for me.", scores: {} }, { text: "Repeatedly check mirrors, seek reassurance, or try to camouflage a perceived flaw.", scores: { BDD: 3 } }, { text: "Avoid social events or being photographed.", scores: { BDD: 2, SOCIAL_PHOBIA: 1 } }, { text: "Spend a lot of time grooming or applying makeup.", scores: { BDD: 2 } } ] },
+            { question: "Repetitive behaviours for you are more about:", options: [ { text: "I don't really have any.", scores: {} }, { text: "A need for things to be 'just right', symmetrical, or in a perfect order.", scores: { OCD: 3 } }, { text: "Checking things (locks, stove) to prevent a feared disaster.", scores: { OCD: 2 } }, { text: "Fidgeting or nervous habits when I'm worried about many things.", scores: { GAD: 1 } } ] },
+            { question: "The fear of being judged by others is a primary driver for you to:", options: [ { text: "It's not a primary driver for me.", scores: {} }, { text: "Avoid social gatherings, parties, or meetings.", scores: { SOCIAL_PHOBIA: 3 } }, { text: "Rehearse conversations over and over in your head.", scores: { SOCIAL_PHOBIA: 2 } }, { text: "Feel extremely anxious when leaving home.", scores: { AGORAPHOBIA: 2 } } ] },
+            { question: "After a panic attack, your biggest fear is often:", options: [ { text: "I don't have panic attacks.", scores: {} }, { text: "The physical symptoms themselves (e.g., thinking it's a heart attack).", scores: { PANIC_DISORDER: 2, HYPOCHONDRIA: 1 } }, { text: "Having another one in public.", scores: { PANIC_DISORDER: 3, AGORAPHOBIA: 2 } }, { text: "What caused it, leading to general worry.", scores: { GAD: 1 } } ] }
+        ];
+
+        // --- Core App Components ---
+
+        /**
+         * NOTE: This component expects an image named "1.jpg" to be in the same
+         * folder as this HTML file. Please rename your image to "1.jpg".
+         */
+        const SplashScreen = ({ onClick }) => (
+            <div
+                onClick={onClick}
+                className="w-screen h-screen bg-cover bg-center cursor-pointer"
+                style={{ backgroundImage: "url('1.jpg')" }}
+                title="Click to continue"
+            ></div>
+        );
+
+        const WelcomeScreen = ({ onStart }) => (
+            <div className="w-full max-w-2xl text-center">
+                <div className="flex justify-center items-center gap-3 mb-4">
+                    <BrainIcon />
+                    <h1 className="text-4xl font-bold text-slate-800">Anxiety Check</h1>
+                </div>
+                <p className="text-lg text-slate-600 mb-6 mx-auto">
+                    This tool is designed to help you understand your feelings and behavioural patterns. Answer the following questions honestly to get a personalised insight into your anxiety profile.
+                </p>
+                <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md mb-8 mx-auto">
+                    <p className="font-bold">Important Disclaimer</p>
+                    <p className="text-sm">This is not a diagnostic tool. The results are for informational purposes only and are not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified mental health professional for any health concerns.</p>
+                </div>
+                <button
+                    onClick={onStart}
+                    className="bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                >
+                    Start the Test
+                </button>
+            </div>
+        );
+
+        const QuizScreen = ({ question, onAnswer, progress }) => (
+            <div className="w-full max-w-3xl">
+                <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold text-slate-600">Progress</span>
+                        <span className="text-sm font-semibold text-teal-600">{Math.round(progress * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2.5">
+                        <div className="bg-teal-600 h-2.5 rounded-full" style={{ width: `${progress * 100}%` }}></div>
+                    </div>
+                </div>
+                <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-100">
+                    <h2 className="text-2xl font-semibold text-slate-800 mb-6 text-center">{question.question}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {question.options.map((option, index) => (
+                            <button
+                                key={index}
+                                onClick={() => onAnswer(option.scores)}
+                                className="w-full bg-slate-50 border-2 border-slate-200 text-slate-700 font-medium py-4 px-6 rounded-lg text-left hover:bg-teal-50 hover:border-teal-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                                {option.text}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+
+        const ResultsScreen = ({ scores, onRestart }) => {
+            const topResult = React.useMemo(() => {
+                let maxScore = -1;
+                let topType = null;
+                for (const type in scores) {
+                    if (scores[type] > maxScore) {
+                        maxScore = scores[type];
+                        topType = type;
+                    }
+                }
+                if (maxScore <= 0) {
+                    return { type: 'GAD', details: anxietyTypes['GAD'], score: 0 };
+                }
+                return { type: topType, details: anxietyTypes[topType], score: maxScore };
+            }, [scores]);
+
+            const analysis = traitAnalysisData[topResult.type];
+
+            return (
+                <div className="w-full max-w-4xl">
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-slate-800">Your Results</h1>
+                        <p className="text-lg text-slate-600 mt-2">Based on your answers, here is an insight into your profile.</p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        <div className="lg:col-span-2 bg-white p-8 rounded-xl shadow-lg border border-slate-100 flex flex-col justify-center">
+                            <h2 className="text-xl font-semibold text-teal-600 mb-2">Primary Profile</h2>
+                            <h3 className="text-3xl font-bold text-slate-800 mb-4">{topResult.details.name}</h3>
+                            <p className="text-slate-600 leading-relaxed">{topResult.details.description}</p>
+                        </div>
+                        <div className="lg:col-span-3 bg-white p-8 rounded-xl shadow-lg border border-slate-100">
+                            <h2 className="text-xl font-semibold text-teal-600 mb-4">Core Trait Analysis</h2>
+                            <p className="text-sm text-slate-500 mb-4">This analysis reflects the typical trait composition for your primary profile.</p>
+                            <div className="space-y-4">
+                                {Object.entries(analysis).map(([trait, value]) => (
+                                    <div key={trait}>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-base font-medium text-slate-700">{trait}</span>
+                                            <span className="text-sm font-medium text-slate-500">{value}%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-4">
+                                            <div className="bg-gradient-to-r from-teal-400 to-teal-600 h-4 rounded-full" style={{ width: `${value}%` }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md my-8">
+                        <p className="font-bold">Remember: This is Not a Diagnosis</p>
+                        <p className="text-sm">This tool is for educational and self-exploration purposes only. True diagnosis can only be provided by a qualified mental health professional. If you are concerned about your mental health, please seek professional help.</p>
+                    </div>
+                    <div className="text-center">
+                        <button
+                            onClick={onRestart}
+                            className="bg-slate-700 text-white font-bold py-3 px-8 rounded-full hover:bg-slate-800 transition-all duration-300 transform hover:scale-105 shadow-lg"
+                        >
+                            Take the Test Again
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Main App Component ---
+        const App = () => {
+            const [gameState, setGameState] = React.useState('welcome'); // 'welcome', 'splash', 'quiz', 'results'
+            const [currentQuestionIndex, setCurrentQuestionIndex] = React.useState(0);
+            const [scores, setScores] = React.useState(() => {
+                const initialScores = {};
+                for (const key in anxietyTypes) {
+                    initialScores[key] = 0;
+                }
+                return initialScores;
+            });
+
+            // Timer effect for the splash screen
+            React.useEffect(() => {
+                if (gameState === 'splash') {
+                    const timer = setTimeout(() => {
+                        setGameState('quiz'); // Transition to the quiz after 3 seconds
+                    }, 3000); 
+                    return () => clearTimeout(timer); // Cleanup timer if component unmounts
+                }
+            }, [gameState]);
+
+            const handleSplashClick = () => {
+                setGameState('quiz'); // Clicking the splash also transitions to the quiz
+            };
+
+            const handleStart = () => {
+                setGameState('splash'); // Clicking "Start Test" now goes to the splash screen
+            };
+
+            const handleAnswer = (answerScores) => {
+                const newScores = { ...scores };
+                for (const type in answerScores) {
+                    newScores[type] += answerScores[type];
+                }
+                setScores(newScores);
+
+                if (currentQuestionIndex < questions.length - 1) {
+                    setCurrentQuestionIndex(currentQuestionIndex + 1);
+                } else {
+                    setGameState('results');
+                }
+            };
+
+            const handleRestart = () => {
+                const initialScores = {};
+                for (const key in anxietyTypes) {
+                    initialScores[key] = 0;
+                }
+                setScores(initialScores);
+                setCurrentQuestionIndex(0);
+                setGameState('welcome'); // Restarting goes back to the welcome screen
+            };
+            
+            // Render only the splash screen when its state is active
+            if (gameState === 'splash') {
+                return <SplashScreen onClick={handleSplashClick} />;
+            }
+
+            // Render the main app layout for all other states
+            return (
+                <div className="min-h-screen bg-amber-50 font-sans flex flex-col">
+                    <main className="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8">
+                        {gameState === 'welcome' && <WelcomeScreen onStart={handleStart} />}
+                        {gameState === 'quiz' && (
+                            <QuizScreen
+                                question={questions[currentQuestionIndex]}
+                                onAnswer={handleAnswer}
+                                progress={(currentQuestionIndex + 1) / questions.length}
+                            />
+                        )}
+                        {gameState === 'results' && <ResultsScreen scores={scores} onRestart={handleRestart} />}
+                    </main>
+                    <Footer />
+                </div>
+            );
+        }
+
+        // Mount the React app to the DOM
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
